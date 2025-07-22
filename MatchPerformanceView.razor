@@ -1,0 +1,54 @@
+﻿@using Hoops.Data
+@code {
+    [Parameter] public MatchPerformanceStats? Stats { get; set; }
+}
+
+@if (Stats is not null)
+{
+    <div class="match-stats-container">
+        <div class="stats-circle-container">
+            <div class="stats-circle points">
+                <div class="stats-value">@Stats.Points</div>
+                <div class="stats-label">PTS</div>
+            </div>
+            <div class="stats-circle assists">
+                <div class="stats-value">@Stats.Assists</div>
+                <div class="stats-label">AST</div>
+            </div>
+            <div class="stats-circle rebounds">
+                <div class="stats-value">@Stats.Rebounds</div>
+                <div class="stats-label">REB</div>
+            </div>
+        </div>
+
+        <div class="stats-bars mt-3">
+            <div class="stats-bar-container">
+                <div class="stats-bar-label">Points</div>
+                <div class="progress bg-light">
+                    <div class="progress-bar bg-success" style="width: @(Stats.Points * 3)%;" role="progressbar"
+                         aria-valuenow="@Stats.Points" aria-valuemin="0" aria-valuemax="30">
+                        @Stats.Points
+                    </div>
+                </div>
+            </div>
+            <div class="stats-bar-container mt-2">
+                <div class="stats-bar-label">Assists</div>
+                <div class="progress bg-light">
+                    <div class="progress-bar bg-info" style="width: @(Stats.Assists * 12)%;" role="progressbar"
+                         aria-valuenow="@Stats.Assists" aria-valuemin="0" aria-valuemax="15">
+                        @Stats.Assists
+                    </div>
+                </div>
+            </div>
+            <div class="stats-bar-container mt-2">
+                <div class="stats-bar-label">Rebounds</div>
+                <div class="progress bg-light">
+                    <div class="progress-bar bg-warning" style="width: @(Stats.Rebounds * 6)%;" role="progressbar"
+                         aria-valuenow="@Stats.Rebounds" aria-valuemin="0" aria-valuemax="20">
+                        @Stats.Rebounds
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,96 @@
+﻿@using Hoops.Data
+@code {
+    [Parameter] public InjuryHistory? History { get; set; }
+}
+
+@if (History is not null)
+{
+    <head>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    </head>
+    <div class="injury-container">
+        <div class="injury-status @GetInjuryStatusClass(History)">
+            <div class="injury-icon">
+                <i class="@GetInjuryIcon(History)"></i>
+            </div>
+            <div class="injury-text">
+                <div class="injury-status-text">@GetInjuryStatusText(History)</div>
+            </div>
+        </div>
+
+        <div class="injury-details mt-3">
+            <div class="d-flex align-items-center mb-2">
+                <i class="fas fa-calendar-times text-danger me-2"></i>
+                <span class="fw-bold">Games Missed:</span>
+                <span class="ms-2 badge @GetGamesMissedBadgeClass(History.GamesMissed)">
+                    @History.GamesMissed
+                </span>
+            </div>
+
+            @if (History.InjuryTypes.Any())
+            {
+                <div>
+                    <div class="mb-1"><i class="fas fa-notes-medical text-danger me-2"></i><span class="fw-bold">Injury Types:</span></div>
+                    <div class="injury-types">
+                        @foreach (var injury in History.InjuryTypes)
+                        {
+                            <span class="injury-badge">@injury</span>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="text-success">
+                    <i class="fas fa-check-circle me-2"></i>No injury history
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private string GetInjuryStatusClass(InjuryHistory history)
+    {
+        return history.GamesMissed switch
+        {
+            0 => "healthy",
+            <= 2 => "minor",
+            <= 5 => "moderate",
+            _ => "severe"
+        };
+    }
+
+    private string GetInjuryStatusText(InjuryHistory history)
+    {
+        return history.GamesMissed switch
+        {
+            0 => "Fully Healthy",
+            <= 2 => "Minor Injuries",
+            <= 5 => "Moderate Concerns",
+            _ => "Injury Prone"
+        };
+    }
+
+    private string GetInjuryIcon(InjuryHistory history)
+    {
+        return history.GamesMissed switch
+        {
+            0 => "fas fa-shield-alt",
+            <= 2 => "fas fa-band-aid",
+            <= 5 => "fas fa-first-aid",
+            _ => "fas fa-ambulance"
+        };
+    }
+
+    private string GetGamesMissedBadgeClass(int gamesMissed)
+    {
+        return gamesMissed switch
+        {
+            0 => "bg-success",
+            <= 2 => "bg-warning",
+            <= 5 => "bg-orange",
+            _ => "bg-danger"
+        };
+    }
+}

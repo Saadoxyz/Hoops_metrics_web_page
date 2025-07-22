@@ -1,0 +1,55 @@
+﻿@using Hoops.Data
+@code {
+    [Parameter] public FitnessStats? Stats { get; set; }
+}
+
+@if (Stats is not null)
+{
+    <div class="fitness-stats-container">
+        <div class="fitness-gauges">
+            <div class="fitness-gauge minutes">
+                <div class="gauge-value">
+                    <div class="gauge-fill" style="height: @(Stats.MinutesPlayed * 100 / 48)%;">
+                    </div>
+                </div>
+                <div class="gauge-label">
+                    <div class="gauge-number">@Stats.MinutesPlayed</div>
+                    <div class="gauge-text">Minutes</div>
+                </div>
+            </div>
+            <div class="fitness-gauge sprints">
+                <div class="gauge-value">
+                    <div class="gauge-fill" style="height: @(Stats.SprintCount * 100 / 100)%;">
+                    </div>
+                </div>
+                <div class="gauge-label">
+                    <div class="gauge-number">@Stats.SprintCount</div>
+                    <div class="gauge-text">Sprints</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fitness-note mt-3">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-heartbeat text-danger me-2"></i>
+                <div>Endurance Level: @GetEnduranceLevel(Stats)</div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string GetEnduranceLevel(FitnessStats stats)
+    {
+        var enduranceScore = stats.MinutesPlayed * 0.6 + stats.SprintCount * 0.4;
+
+        return enduranceScore switch
+        {
+            >= 60 => "Excellent",
+            >= 50 => "Very Good",
+            >= 40 => "Good",
+            >= 30 => "Average",
+            _ => "Needs Improvement"
+        };
+    }
+}

@@ -1,0 +1,663 @@
+﻿@page "/players"
+@page "/players/{SelectedPlayerId:int?}"
+@using Hoops.Data
+@inject PlayerService PlayerService
+@inject NavigationManager NavigationManager
+
+<style>
+    /* Main color scheme */
+    :root {
+        --primary-color: #1a237e;
+        --primary-light: #534bae;
+        --primary-dark: #000051;
+        --secondary-color: #ff6d00;
+        --secondary-light: #ff9e40;
+        --secondary-dark: #c43c00;
+        --bg-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        --card-bg: #f8f9fa;
+        --light-text: #ffffff;
+        --dark-text: #212529;
+    }
+
+    /* Main Layout */
+    body {
+        background-color: #f0f2f5;
+    }
+
+    .header-banner {
+        background: var(--bg-gradient);
+        padding: 2rem;
+        border-radius: 0 0 1.5rem 1.5rem;
+        box-shadow: 0 10px 25px rgba(26, 35, 126, 0.2);
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+        .header-banner::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://plus.unsplash.com/premium_photo-1675364966937-c2bdf5bce9b5?fm=jpg&q=60&w=3000&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8aW5kb29yJTIwYmFza2V0YmFsbCUyMGNvdXJ0fGVufDB8fDB8fHww');
+            background-size: 300px;
+            z-index: 0;
+            opacity: 0.1;
+        }
+
+    .header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    .header-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        color: var(--light-text);
+        display: flex;
+        align-items: center;
+    }
+
+    .header-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 0;
+        font-weight: 400;
+    }
+
+    /* Cards and Content */
+    .content-card {
+        background-color: white;
+        border-radius: 1rem;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: none;
+    }
+
+        .content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        }
+
+    .card-header-custom {
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-body-custom {
+        padding: 1.5rem;
+    }
+
+    /* Player Cards */
+    .player-card {
+        transition: all 0.3s ease;
+        overflow: hidden;
+        cursor: pointer;
+    }
+
+        .player-card:hover {
+            transform: translateY(-5px);
+        }
+
+    .player-card-header {
+        padding: 1.25rem;
+        color: white;
+        position: relative;
+    }
+
+    .player-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.5);
+    }
+
+    .player-stats {
+        display: flex;
+        justify-content: space-between;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .stat {
+        text-align: center;
+        flex: 1;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Detail view */
+    .player-detail-header {
+        padding: 1.5rem;
+        color: white;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+
+        .player-detail-header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 0;
+        }
+
+    .player-detail-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Filters */
+    .filter-card {
+        background-color: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        border: none;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    .filter-body {
+        padding: 1.5rem;
+    }
+
+    .form-select-custom {
+        border-radius: 0.5rem;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e9ecef;
+        font-size: 1rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        background-color: white;
+    }
+
+        .form-select-custom:focus {
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 0.25rem rgba(26, 35, 126, 0.25);
+        }
+
+    /* Position specific classes */
+    .position-pg {
+        background: linear-gradient(135deg, #2196f3 0%, #1565c0 100%);
+    }
+
+    .position-sg {
+        background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+    }
+
+    .position-sf {
+        background: linear-gradient(135deg, #ff9800 0%, #ef6c00 100%);
+    }
+
+    .position-pf {
+        background: linear-gradient(135deg, #f44336 0%, #c62828 100%);
+    }
+
+    .position-c {
+        background: linear-gradient(135deg, #607d8b 0%, #37474f 100%);
+    }
+
+    /* Position legend */
+    .position-legend {
+        background-color: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        border: none;
+    }
+
+    .legend-header {
+        background-color: #03a9f4;
+        color: white;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    .legend-body {
+        padding: 0;
+    }
+
+    .legend-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1.5rem;
+        border-bottom: 1px solid #f1f1f1;
+        transition: background-color 0.2s ease;
+    }
+
+        .legend-item:last-child {
+            border-bottom: none;
+        }
+
+        .legend-item:hover {
+            background-color: #f8f9fa;
+        }
+
+    .position-badge {
+        font-weight: 600;
+        border-radius: 1rem;
+        padding: 0.35rem 1rem;
+        font-size: 0.75rem;
+    }
+
+    /* Custom buttons */
+    .btn-primary-custom {
+        background-color: var(--primary-color);
+        border: none;
+        border-radius: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(26, 35, 126, 0.2);
+    }
+
+        .btn-primary-custom:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(26, 35, 126, 0.3);
+        }
+
+    .btn-secondary-custom {
+        background-color: #f8f9fa;
+        border: none;
+        border-radius: 0.5rem;
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+        .btn-secondary-custom:hover {
+            background-color: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+        }
+
+    /* Injury History Styles - Enhanced */
+    .injury-container {
+        padding: 0.75rem;
+        background-color: #f8f9fa;
+        border-radius: 0.75rem;
+    }
+
+    .injury-status {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-radius: 0.75rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+    }
+
+        .injury-status:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .injury-status.healthy {
+            background-color: rgba(40, 167, 69, 0.1);
+            border-left: 4px solid #28a745;
+        }
+
+        .injury-status.minor {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-left: 4px solid #ffc107;
+        }
+
+        .injury-status.moderate {
+            background-color: rgba(251, 133, 0, 0.1);
+            border-left: 4px solid #fb8500;
+        }
+
+        .injury-status.severe {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid #dc3545;
+        }
+
+    .injury-icon {
+        font-size: 1.75rem;
+        margin-right: 1rem;
+    }
+
+    .healthy .injury-icon {
+        color: #28a745;
+    }
+
+    .minor .injury-icon {
+        color: #ffc107;
+    }
+
+    .moderate .injury-icon {
+        color: #fb8500;
+    }
+
+    .severe .injury-icon {
+        color: #dc3545;
+    }
+
+    .injury-status-text {
+        font-weight: bold;
+    }
+
+    .injury-types {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+    }
+
+    .injury-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: bold;
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border-radius: 1rem;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+</style>
+
+<div class="container-fluid pb-5">
+    <div class="header-banner">
+        <div class="header-content">
+            <h2 class="header-title">
+                <i class="fas fa-basketball-ball me-3"></i>Hoops Player Roster
+            </h2>
+            <p class="header-subtitle">Explore our team's top talent and stats</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sidebar with filters -->
+        <div class="col-md-3 mb-4">
+            <div class="filter-card">
+                <div class="filter-header">
+                    <i class="fas fa-filter me-2"></i>
+                    <h5 class="mb-0">Filters</h5>
+                </div>
+                <div class="filter-body">
+                    <label for="positionFilter" class="form-label fw-bold text-secondary">Position:</label>
+                    <select id="positionFilter" class="form-select-custom w-100" @onchange="OnPositionFilterChanged">
+                        <option value="All">All Positions</option>
+                        @foreach (var pos in Enum.GetValues<Position>())
+                        {
+                            <option value="@pos" selected="@(SelectedPosition == pos.ToString())">@GetPositionFullName(pos)</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div class="position-legend">
+                <div class="legend-header">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <h5 class="mb-0">Position Legend</h5>
+                </div>
+                <div class="legend-body">
+                    <div class="legend-item">
+                        <span class="fw-bold">PG</span>
+                        <span class="position-badge bg-primary text-white">Point Guard</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="fw-bold">SG</span>
+                        <span class="position-badge bg-success text-white">Shooting Guard</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="fw-bold">SF</span>
+                        <span class="position-badge bg-warning text-dark">Small Forward</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="fw-bold">PF</span>
+                        <span class="position-badge bg-danger text-white">Power Forward</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="fw-bold">C</span>
+                        <span class="position-badge bg-dark text-white">Center</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main content area -->
+        <div class="col-md-9">
+            @if (SelectedPlayerId.HasValue && SelectedPlayer != null)
+            {
+                <!-- Single player detail view -->
+                <div class="content-card">
+                    <div class="player-detail-header position-@SelectedPlayer.Position.ToString().ToLower()">
+                        <div class="player-detail-content d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0 text-white">
+                                <i class="fas fa-user me-2"></i>@SelectedPlayer.Name
+                                <span class="badge bg-light text-dark ms-2">@SelectedPlayer.Position</span>
+                            </h3>
+                            <button class="btn btn-secondary-custom" @onclick="() => NavigateToPlayersList()">
+                                <i class="fas fa-arrow-left me-2"></i>Back to All Players
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="player-avatar position-@SelectedPlayer.Position.ToString().ToLower() text-white">
+                                        @SelectedPlayer.Name.Substring(0, 1)
+                                    </div>
+                                    <div class="ms-3">
+                                        <h4 class="mb-1">@SelectedPlayer.Name</h4>
+                                        <p class="mb-0 text-muted">
+                                            <i class="fas fa-flag me-1"></i>@SelectedPlayer.Nationality
+                                            <span class="mx-2">|</span>
+                                            <i class="fas fa-birthday-cake me-1"></i>@SelectedPlayer.Age years
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="content-card h-100 border-success">
+                                    <div class="card-header-custom bg-success text-white">
+                                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Match Performance</h5>
+                                    </div>
+                                    <div class="card-body-custom">
+                                        <MatchPerformanceView Stats="SelectedPlayer.MatchStats" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="content-card h-100 border-primary">
+                                    <div class="card-header-custom bg-primary text-white">
+                                        <h5 class="mb-0"><i class="fas fa-heartbeat me-2"></i>Fitness Stats</h5>
+                                    </div>
+                                    <div class="card-body-custom">
+                                        <FitnessView Stats="SelectedPlayer.FitnessStats" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="content-card h-100 border-danger">
+                                    <div class="card-header-custom bg-danger text-white">
+                                        <h5 class="mb-0"><i class="fas fa-first-aid me-2"></i>Injury History</h5>
+                                    </div>
+                                    <div class="card-body-custom">
+                                        <InjuryHistoryView History="SelectedPlayer.InjuryHistory" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Player cards grid -->
+                <div class="row">
+                    @foreach (var player in FilteredPlayers)
+                    {
+                        <div class="col-lg-6 col-xl-4 mb-4">
+                            <div class="player-card content-card" @onclick="() => NavigateToPlayerDetail(player.Id)">
+                                <div class="player-card-header position-@player.Position.ToString().ToLower()">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-user me-2"></i>@player.Name
+                                    </h5>
+                                </div>
+                                <div class="card-body-custom">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="player-avatar position-@player.Position.ToString().ToLower() text-white">
+                                            @player.Name.Substring(0, 1)
+                                        </div>
+                                        <div class="ms-3">
+                                            <h5 class="mb-0">@GetPositionFullName(player.Position)</h5>
+                                            <small class="text-muted">
+                                                <i class="fas fa-flag me-1"></i>@player.Nationality
+                                                <span class="mx-1">|</span>
+                                                <i class="fas fa-birthday-cake me-1"></i>@player.Age yrs
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <div class="player-stats">
+                                        <div class="stat">
+                                            <div class="stat-value">@player.MatchStats.Points</div>
+                                            <div class="stat-label">PTS</div>
+                                        </div>
+                                        <div class="stat">
+                                            <div class="stat-value">@player.MatchStats.Assists</div>
+                                            <div class="stat-label">AST</div>
+                                        </div>
+                                        <div class="stat">
+                                            <div class="stat-value">@player.MatchStats.Rebounds</div>
+                                            <div class="stat-label">REB</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-light border-0">
+                                    <button class="btn btn-primary-custom w-100">
+                                        View Details <i class="fas fa-arrow-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int? SelectedPlayerId { get; set; }
+
+    private List<Player> FilteredPlayers = new();
+    private string SelectedPosition = "All";
+    private Player? SelectedPlayer => SelectedPlayerId.HasValue ?
+        PlayerService.GetPlayerById(SelectedPlayerId.Value) : null;
+
+    protected override void OnInitialized()
+    {
+        LoadPlayers();
+    }
+
+    protected override void OnParametersSet()
+    {
+        LoadPlayers();
+    }
+
+    private void LoadPlayers()
+    {
+        FilteredPlayers = SelectedPosition == "All"
+            ? PlayerService.GetAllPlayers().ToList()
+            : PlayerService.GetPlayersByPosition(Enum.Parse<Position>(SelectedPosition)).ToList();
+    }
+
+    private void OnPositionFilterChanged(ChangeEventArgs e)
+    {
+        SelectedPosition = e.Value?.ToString() ?? "All";
+        LoadPlayers();
+
+        // Clear player selection when filter changes
+        if (SelectedPlayerId.HasValue)
+        {
+            NavigationManager.NavigateTo("/players");
+        }
+    }
+
+    private void NavigateToPlayerDetail(int playerId)
+    {
+        NavigationManager.NavigateTo($"/players/{playerId}");
+    }
+
+    private void NavigateToPlayersList()
+    {
+        NavigationManager.NavigateTo("/players");
+    }
+
+    private string GetPositionColorClass(Position position) => position switch
+    {
+        Position.PG => "primary",
+        Position.SG => "success",
+        Position.SF => "warning",
+        Position.PF => "danger",
+        Position.C => "dark",
+        _ => "secondary"
+    };
+
+    private string GetPositionFullName(Position position) => position switch
+    {
+        Position.PG => "Point Guard",
+        Position.SG => "Shooting Guard",
+        Position.SF => "Small Forward",
+        Position.PF => "Power Forward",
+        Position.C => "Center",
+        _ => position.ToString()
+    };
+}
